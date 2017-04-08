@@ -22,6 +22,10 @@ class ChunkMap:
         self.chunk_dict = chunk_dict
         self.chunk_map = None
         self.rotation_map = None
+        # final output maps
+        self.tile_map_walkable = np.zeros((self.height,self.width))
+        self.tile_map_transparency = np.zeros((self.height,self.width))
+
         self.start_point = None
         self.next_available_points = []
         self.chunk_match_dict = {}
@@ -31,7 +35,7 @@ class ChunkMap:
         self.create_search_dicts()
 
         # match string for any boundary or empty
-        self.boundary_match = '[A-Z]'
+        self.boundary_match = 'A'
         self.empty_space_match = '[A-Z]'
 
     def _build_map(self):
@@ -234,6 +238,49 @@ class ChunkMap:
 
         self.chunk_match_dict = chunk_match_dict
 
+    def place_tiles_from_chunk(self,location):
+        # first get arrays needed
+        chunk_id = self.chunk_map[location]
+        chunk_rotation = self.rotation_map[location]
+        chunk = self.chunk_dict[chunk_id]
+
+        walk_array = chunk.get_rotated_walkable_array(chunk_rotation)
+        transparent_array = chunk.get_rotated_transparent_array(chunk_rotation)
+
+        y_start = location[0] * self.chunk_size
+        x_start = location[1] * self.chunk_size
+
+        y_end = y_start + self.chunk_size
+        x_end = x_start + self.chunk_size
+
+        self.tile_map_walkable[y_start:y_end, x_start:x_end] = walk_array
+        self.tile_map_transparency[y_start:y_end, x_start:x_end] = transparent_array
+
+    def place_tiles_from_chunk_map(self):
+        """
+        places all tiles from the chunk map
+        :return: updates walk array and tile array with data from chunk array
+        """
+        # get all points to place tiles from
+        locations = []
+        for i in range(int(self.height / self.chunk_size)):
+            for j in range(int(self.width / self.chunk_size)):
+                locations.append((i,j))
+
+        for location in locations:
+            self.place_tiles_from_chunk(location)
+
+    def print_walk_map(self):
+
+        for i in range(int(self.height)):
+            line = ''
+            for j in range(int(self.width)):
+                if self.tile_map_walkable[(i,j)] == 1:
+                    line += '.'
+                else:
+                    line += '#'
+            print(line)
+
     def generate(self,chunk_limit, fail_limit):
         """
         generate chunkmap
@@ -275,13 +322,48 @@ def test_chunk_map():
     print(x.next_available_points)
 
 
-def build_chunks():
+def build_chunks_test():
     out = {}
+    out[0] = Chunk(np.zeros((5,5)),np.zeros((5,5)),['A','A','A','A'],['[A-Z]','[A-Z]','[A-Z]','[A-Z]'])
     out[1] = Chunk(np.ones((5,5)),np.ones((5,5)),['A','A','A','A'],['[AB]','[Q]','[AB]','[AB]'])
     out[2] = Chunk(np.ones((5,5)),np.ones((5,5)),['B','B','B','B'],['[AC]','[AC]','[AC]','[AC]'])
     out[3] = Chunk(np.zeros((5,5)),np.ones((5, 5)), ['C', 'Q', 'C', 'Q'], ['[AB]', '[AB]', '[AB]', '[AB]'])
     out[4] = Chunk(np.ones((5,5)),np.ones((5,5)),['C', 'C', 'C', 'C'],['[ABC]','[ABC]','[ABC]','[ABC]'])
     return out
+
+
+def chunk_library():
+    out = {}
+    out[0] = Chunk(np.zeros((5, 5)), np.zeros((5, 5)), ['A', 'A', 'A', 'A'], ['A', 'A', 'A', 'A'])
+    out[1] = Chunk(np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]), ["E", "A", "E", "A"], ["E", "A", "E", "A"])
+    out[2] = Chunk(np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 0], [0, 0, 1, 0, 0]]), ["E", "A", "E", "E"], ["E", "A", "E", "E"])
+    out[3] = Chunk(np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), ["E", "A", "E", "E"], ["E", "A", "E", "E"])
+    out[4] = Chunk(np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), ["E", "A", "E", "O"], ["E", "A", "E", "O"])
+    out[5] = Chunk(np.array([[0, 0, 1, 0, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), ["E", "A", "E", "O"], ["E", "A", "E", "O"])
+    out[6] = Chunk(np.array([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 0, 0]]), np.array([[0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 0, 0]]), ["I", "A", "E", "A"], ["C", "A", "E", "A"])
+    out[7] = Chunk(np.array([[0, 0, 0, 1, 0], [0, 0, 0, 1, 0], [0, 0, 0, 1, 0], [0, 0, 1, 1, 0], [0, 0, 1, 0, 0]]), np.array([[0, 0, 0, 1, 0], [0, 0, 0, 1, 0], [0, 0, 0, 1, 0], [0, 0, 1, 1, 0], [0, 0, 1, 0, 0]]), ["C", "A", "E", "A"], ["I", "A", "E", "A"])
+    out[8] = Chunk(np.array([[0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), np.array([[0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), ["P", "A", "E", "e"], ["e", "A", "E", "P"])
+    out[9] = Chunk(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0]]), np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0]]), ["f", "P", "A", "e"], ["f", "e", "A", "P"])
+    out[10] = Chunk(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 1, 0, 0]]), ["f", "P", "E", "e"], ["f", "e", "E", "P"])
+    out[11] = Chunk(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]), np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]), ["A", "E", "E", "A"], ["A", "E", "E", "A"])
+    out[12] = Chunk(np.array([[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]), np.array([[0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]), ["E", "A", "E", "E"], ["E", "A", "E", "E"])
+    out[13] = Chunk(np.array([[0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [0, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["O", "A", "A", "E"], ["O", "A", "A", "E"])
+    out[14] = Chunk(np.array([[0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 1, 1, 1, 0], [0, 1, 1, 1, 0], [1, 1, 1, 1, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["O", "E", "A", "A"], ["O", "E", "A", "A"])
+    out[15] = Chunk(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["A", "E", "A", "E"], ["A", "E", "A", "E"])
+    out[16] = Chunk(np.array([[0, 0, 0, 1, 0], [0, 0, 1, 1, 0], [1, 1, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 0, 0, 1, 0], [0, 0, 1, 1, 0], [1, 1, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["C", "E", "A", "A"], ["I", "E", "A", "A"])
+    out[17] = Chunk(np.array([[0, 1, 0, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 1, 0, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["I", "A", "A", "E"], ["I", "A", "A", "E"])
+    out[18] = Chunk(np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), np.array([[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]), ["A", "A", "A", "A"], ["A", "A", "A", "A"])
+
+    return out
+
+
+def build_dungeon(width, height, chunk_size, fail_limit):
+    cks = chunk_library()
+    world = ChunkMap(width,height,chunk_size,cks)
+    world.generate(int((width*height / chunk_size) * .8),fail_limit)
+    world.place_tiles_from_chunk_map()
+    world.print_walk_map()
+    print(world.chunk_map)
 
 
 class Chunk:
@@ -350,6 +432,21 @@ class Chunk:
 
 
     # TODO make sure to add rotation commands for the numpy arrays
+
+    def get_rotated_walkable_array(self,rotation):
+        out = self.walk_array
+        for i in range(int(rotation)):
+            out = np.rot90(out)
+        return out
+
+    def get_rotated_transparent_array(self, rotation):
+        out = self.transparent_array
+        for i in range(int(rotation)):
+            out = np.rot90(out)
+        return out
+
+
+
 
 
 
