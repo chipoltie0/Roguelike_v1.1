@@ -4,8 +4,8 @@ import PuzzleGenerator as pg
 COLOR_BLACK = (0,0,0)
 COLOR_WHITE = (255,255,255)
 COLOR_DICT = {0:COLOR_BLACK,1:COLOR_WHITE}
-WIDTH = 60
-HEIGHT = 60
+WIDTH = 50
+HEIGHT = 50
 
 
 def create_consoles():
@@ -23,8 +23,10 @@ if __name__ == '__main__':
 
     cks = pg.chunk_library()
 
-    while tdl.event.is_window_closed():
+    while not tdl.event.is_window_closed():
         world = pg.ChunkMap(WIDTH,HEIGHT,5,cks)
+        world.generate(50,200)
+        world.place_tiles_from_chunk_map()
 
         for i in range(HEIGHT):
             for j in range(WIDTH):
