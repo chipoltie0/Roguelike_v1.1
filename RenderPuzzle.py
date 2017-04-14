@@ -14,7 +14,7 @@ def create_consoles():
 
     # create next console in cycle
     next_console = tdl.Console(WIDTH, HEIGHT)
-    #comment
+    #comment is comment
 
     return console, next_console
 
