@@ -306,6 +306,7 @@ class ChunkMap:
 
                 # if failed too many times, quit generation
                 if fail_count > fail_limit:
+
                     return
             else:
                 # if no problem, then place tile
