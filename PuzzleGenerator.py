@@ -60,14 +60,15 @@ class ChunkMap:
         """
         # set random start point for the chunks
         self.start_point = (
-        round(np.random.triangular(0, (self.height - 1) / self.chunk_size / 2, (self.height - 1) / self.chunk_size)),
-        round(np.random.triangular(0, (self.width - 1)/ self.chunk_size / 2, (self.width - 1)/ self.chunk_size)))
+        round(np.random.triangular(0, (self.height - 1) / self.chunk_size / 2, (self.height - 2) / self.chunk_size)),
+        round(np.random.triangular(0, (self.width - 1)/ self.chunk_size / 2, (self.width - 2)/ self.chunk_size)))
 
         # create seed chunk and seed rotation of chunk
         seed_chunk = random.choice(list(self.chunk_dict.keys()))
         seed_rotation = random.choice([0,1,2,3])
 
         # place seed chunk
+        # print(self.start_point)
         self.place_chunk(seed_chunk,self.start_point, seed_rotation)
 
         # self.next_available_points = self.get_surrounding(self.start_point)
