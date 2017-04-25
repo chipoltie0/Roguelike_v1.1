@@ -18,7 +18,8 @@ DEFAULT_KEYBINDS = {
     'RIGHT':'right',
     'UP':'up',
     'LEFT':'left',
-    'DOWN':'down'}
+    'DOWN':'down',
+    'p':'pickup'}
 
 
 def get_action(event,binding=DEFAULT_KEYBINDS):
@@ -28,6 +29,12 @@ def get_action(event,binding=DEFAULT_KEYBINDS):
     :return: key specifically pressed
     """
     key = event.key  # get the character pressed
+    keychar = event.keychar
+    if key == 'CHAR':
+        key = keychar
+
+    if key not in binding:
+        return 'none'
     return binding[key]
 
 

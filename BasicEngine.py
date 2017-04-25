@@ -3,6 +3,7 @@ import WorldMap as wm
 import PuzzleGenerator as pg
 import GamePiece as gp
 import KeyboardInput as ki
+import GameInventory as gi
 import random
 
 WIDTH = 50
@@ -59,6 +60,15 @@ if __name__ == '__main__':
         else:
             dungeon.set_stairs()
 
+        # add pieces to dungeon
+        points_to_place = dungeon.get_available_walk_spaces()
+        for x in range(int(random.triangular(0,7,3))):
+            loc = random.choice(points_to_place)
+            inv = [gi.Item('gold','gold',int(random.triangular(1,100,20)))]
+            p = gi.Pile(dungeon,loc,color=(200,200,0), char='*',inventory=inv)
+            dungeon.add_piece(p)
+
+
         # add level to dungeon whole
         levels[i]= dungeon
     player_level = 0
@@ -66,6 +76,7 @@ if __name__ == '__main__':
     points_available = levels[player_level].get_available_walk_spaces()
     player_start = levels[player_level].up_stairs
     player = gp.Piece(levels[player_level],player_start,color=(0,0,0),char='@')
+    player_inventory = gi.Inventory()
 
     while not tdl.event.is_window_closed():
 
@@ -103,6 +114,11 @@ if __name__ == '__main__':
             else:
                 pass
 
+        # draw pieces
+        for piece in levels[player_level].pieces:
+            if piece.location in view:
+                next_console.draw_char(piece.location[0],piece.location[1],char=piece.char,fg=piece.color,bg=(100,100,100))
+
         # draw player
         next_console.draw_char(player.location[0],player.location[1],player.char,
                                fg=(255,255,0),bg=(100,100,100))
@@ -137,6 +153,17 @@ if __name__ == '__main__':
                 player.move_piece_to(levels[player_level].up_stairs)
             else:
                 pass
+        elif action == 'pickup':
+            loc = player.location
+
+            for pile in levels[player_level].pieces:
+                if loc == pile.location:
+                    if hasattr(pile,'inventory'):
+                        player_inventory.add_item(pile.inventory.inventory)
+                        levels[player_level].pieces.remove(pile)
+                        print(player_inventory.inventory[0].amount)
+
+
         else:
             pass
 

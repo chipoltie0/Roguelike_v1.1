@@ -9,6 +9,7 @@ class WorldMap:
         self.explored = set()  # list of all points that the player has seen
         self.up_stairs = None
         self.down_stairs = None
+        self.pieces = []
 
     def load_walk_map(self, walk_map):
         """
@@ -120,6 +121,12 @@ class WorldMap:
 
             if pathable:
                 complete = True
+
+    def add_piece(self,piece):
+        self.pieces.append(piece)
+
+    def remove_piece(self,piece):
+        self.pieces.remove(piece)
 
 
 
